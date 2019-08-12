@@ -32,7 +32,7 @@
             let index = chart.data.labels.indexOf(key);
             if(index === -1){
                 chart.data.labels.push(key);
-                chart.data.datasets.push({data:[{x:x,y:y}],lineTension: 0,label: key,fill: false,showLine: true,pointRadius: 10,borderColor:colors[chart.data.datasets.length%colors.length]});
+                chart.data.datasets.push({data:[{x:x,y:y}],lineTension: 0,label: key,fill: false,showLine: true,pointRadius: 0,borderColor:colors[chart.data.datasets.length%colors.length]});
             }else{
                 chart.data.datasets[index].data.push({x:x,y:y});
                 if(chart_remove_equal_points){

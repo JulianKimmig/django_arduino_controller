@@ -3,9 +3,9 @@
 from . import consumers
 from .apps import DjangoArduinoControllerConfig
 
-prefix = DjangoArduinoControllerConfig.baseurl + "/"
-if len(prefix) == 1:
-    prefix = ""
+#prefix = DjangoArduinoControllerConfig.baseurl + "/"
+#if len(prefix) == 1:
+#    prefix = ""
 # urlpatterns = [
 #    path(prefix+'ws/<socket_type>', consumers.BoardDataConsumer,name="websocket"),
 #    path(prefix+'ws/<socket_type>/<arg>', consumers.BoardDataConsumer,name="websocket_arg"),
@@ -25,5 +25,10 @@ urlpatterns = [
         route="ws/datalogger",
         view=consumers.DataLoggerConsumer,
         name="dataloggersocket",
+    ),
+    dict(
+        route="ws/api",
+        view=consumers.APIConsumer,
+        name="api_websocket",
     ),
 ]

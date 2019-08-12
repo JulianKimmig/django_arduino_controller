@@ -1,15 +1,13 @@
-import os
 import sys
 
-import logging
 import coloredlogs
+import logging
+import os
 from logging.handlers import RotatingFileHandler
 
-from plug_in_django import manage as plug_in_django_manage
 from django_arduino_controller.apps import DjangoArduinoControllerConfig
-
 from json_dict import JsonDict
-
+from plug_in_django import manage as plug_in_django_manage
 
 DEBUGGING = True
 
@@ -51,7 +49,6 @@ def main():
     logger.info("Use basedir: " + os.path.abspath(BASE_DIR))
 
     #    board_collection.
-    import arduino_board_collection.board_collection
 
     # plugin to django
     plug_in_django_manage.plug_in(DjangoArduinoControllerConfig, config)

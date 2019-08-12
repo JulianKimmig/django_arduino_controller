@@ -8,6 +8,7 @@ from arduino_controller.serialport import SerialPortDataTarget
 from django.apps import apps
 
 from arduino_controller.serialreader.serialreader import SerialReaderDataTarget
+from arduino_controller.board_api import ArduinoAPIWebsocketConsumer
 from json_dict import JsonMultiEncoder
 from plug_in_django.manage import logger
 
@@ -232,3 +233,20 @@ class DataLoggerConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         self.receiver.receive(text_data)
+
+
+class APIConsumer(WebsocketConsumer,ArduinoAPIWebsocketConsumer):
+    def connect(self):
+        self.register_at_apis(self)
+        self.accept()
+
+    def disconnect(self, close_code):
+        self.unregister_at_apis(self)
+
+    def receive(self, text_data=None, bytes_data=None):
+        self.client_to_api(text_data)
+
+    def to_client(self, data=None, type=None):
+        self.send(
+            text_data=json.dumps({"data": data, "type": type}, cls=JsonMultiEncoder)
+        )
