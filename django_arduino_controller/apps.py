@@ -13,7 +13,6 @@ class DjangoArduinoControllerConfig(AppConfig):
     config = None
 
     def ready(self):
-        print(self.__class__,"ready")
         if self.serial_reader is None:
             self.serial_reader = acsr.SerialReader(
                 start_in_background=True, config=self.config.getsubdict(["portdata"])
