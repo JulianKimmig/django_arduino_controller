@@ -1,5 +1,6 @@
 if (!logger)
     var logger = console;
+
 if (typeof arduino_api_controller === "undefined") {
     arduino_api_controller = {
         api_ws_url: null,
@@ -17,7 +18,7 @@ if (typeof arduino_api_controller === "undefined") {
         },
         api_constructor: function (api) {
             let panel = $('<div id="api_control_panel_' + api.position + '">' +
-                '<div class="api_control_panel_title">' + api.name + '</div><div name="api_control_panel_boards"></div></div>');
+                '<div class="api_control_panel_title">' + api.name + '<span name="status_indicator"><span class="tooltiptext"></span></span></div><div name="api_control_panel_boards"></div></div>');
             arduino_api_controller.api_controll_panel.append(panel);
             return panel;
         },
@@ -25,7 +26,7 @@ if (typeof arduino_api_controller === "undefined") {
             let panel = $('<div name="api_control_panel_board_' + board.position + '"></div>');
             let title = $('<div class="api_control_panel_board_title">' + board.board_class + '</div>');
             panel.append(title);
-            let selector=$('<select name="board_selector" style="max-width: 100%"><option selected disabled="disabled">choose board</option></select>');
+            let selector=$('<select name="board_selector"><option selected disabled="disabled">choose board</option></select>');
             for(let i=0;i<board.possible_boards.length;i++){
                 let option = $('<option value="'+i+'"></option>');
                 option.text(board.possible_boards[i]);
@@ -37,6 +38,57 @@ if (typeof arduino_api_controller === "undefined") {
             }
             panel.append(selector);
             return panel
+        },
+        ApiFunction : class{
+            constructor(api,name,data) {
+                this.api = api;
+                this.name=name;
+                this.input = null;
+                this.create_input(data);
+            }
+
+            create_input(data) {
+                if(!data.visible)return;
+                let box = $("<form class='api_function_box form'></form>");
+                for (let kwarg in data.kwargs) {
+                    let funcdata = data.kwargs[kwarg];
+                    let subbox=$("<div class='api_function_parameter form-check-inline'></div>");
+                    let input = $('<input name="'+kwarg+'"class="form-control "/>');
+                    input.attr("type", funcdata.type ? funcdata.type : "number");
+                    input.val(funcdata.default ? funcdata.default : 0);
+                    switch (funcdata.type) {
+                        case "number":
+                            if(funcdata.step)
+                                input.attr("step", funcdata.step);
+                            break;
+                        default:
+                            break;
+                    }
+                    subbox.append("<label>" + kwarg + "</label>");
+                    subbox.append(input);
+                    box.append(subbox);
+                }
+                let button = $("<button class='functionbutton btn btn-primary' disabled>set</button>");
+                box.append(button);
+                let func = this;
+                box.submit(function( event ) {
+                    event.preventDefault();
+                    func.run($( this ).serializeArray());
+                    });
+                this.input = box;
+            }
+
+            run(data){
+                console.log(this,data);
+                if(!this.api.ready)
+                    return;
+                let send_data={api: this.api.position};
+                for(let i=0;i<data.length;i++){
+                    send_data[data[i].name] = data[i].value
+                }
+                arduino_api_controller.api_ws.cmd_message(this.name, send_data);
+
+            }
         },
         Board: class {
             constructor(api, position, board_class, linked_board, possible_boards) {
@@ -65,9 +117,12 @@ if (typeof arduino_api_controller === "undefined") {
             constructor(name, position) {
                 this.name = name;
                 this.position = position;
+                this.ready=false;
                 this.container = arduino_api_controller.api_constructor(this);
                 this.boardbox = this.container.find("[name='api_control_panel_boards']");
-                this.boards = []
+                this.status_indicator = this.container.find("[name='status_indicator']");
+                this.boards = [];
+                this.functions={};
             }
 
             remove() {
@@ -93,11 +148,45 @@ if (typeof arduino_api_controller === "undefined") {
             add_board(board) {
                 this.boards.push(board);
             }
+            set_status(data) {
+                this.ready=false;
+                this.container.find(".functionbutton").attr("disabled", true);
+                if (data.status === true) {
+                    this.container.find(".functionbutton").attr("disabled", false);
+                    this.status_indicator.addClass("valid");
+                    this.status_indicator.removeClass("invalid");
+                    this.status_indicator.find(".tooltiptext").text("");
+                    this.ready=true;
+                }
+                if (data.status === false) {
+                    this.status_indicator.addClass("invalid");
+                    this.status_indicator.removeClass("valid");
+                    this.status_indicator.find(".tooltiptext").text(data.reason);
+                }
+            }
+
+            clear_functions(){
+
+            }
+            set_functions(data) {
+                this.clear_functions();
+                for (let func in data) {
+                    if(data[func].api_function)
+                        this.add_function(new arduino_api_controller.ApiFunction(this,func,data[func]));
+                }
+            }
+
+            add_function(func) {
+                this.functions[func.name] = func;
+                if(func.input)
+                    this.container.append(func.input)
+            }
         },
         add_api: function (api) {
             arduino_api_controller.apis.push(api);
             arduino_api_controller.api_ws.cmd_message("get_boards", {api: api.position});
             arduino_api_controller.api_ws.cmd_message("get_status", {api: api.position});
+            arduino_api_controller.api_ws.cmd_message("get_functions", {api: api.position});
         },
         set_apis: function (data) {
             arduino_api_controller.clear_apis();
@@ -108,12 +197,23 @@ if (typeof arduino_api_controller === "undefined") {
         set_boards: function (data) {
             arduino_api_controller.apis[data.data.api_position].set_boards(data.data)
         },
+        set_status: function (data) {
+            for (let i = 0; i < Math.min(data.data.length,arduino_api_controller.apis.length); i++) {
+                arduino_api_controller.apis[i].set_status(data.data[i]);
+            }
+        },
+
+        set_functions: function (data) {
+            arduino_api_controller.apis[data.data.api_position].set_functions(data.data)
+        },
     };
 
 
     arduino_api_controller.api_ws.add_on_connect_function(arduino_api_controller.check_apis);
     arduino_api_controller.api_ws.add_cmd_funcion("set_apis", arduino_api_controller.set_apis);
     arduino_api_controller.api_ws.add_cmd_funcion("set_boards", arduino_api_controller.set_boards);
+    arduino_api_controller.api_ws.add_cmd_funcion("set_status", arduino_api_controller.set_status);
+    arduino_api_controller.api_ws.add_cmd_funcion("set_functions", arduino_api_controller.set_functions);
     $(document).ready(function () {
         if (arduino_api_controller.api_ws_url !== null) {
             arduino_api_controller.api_ws.connect(arduino_api_controller.api_ws_url);
