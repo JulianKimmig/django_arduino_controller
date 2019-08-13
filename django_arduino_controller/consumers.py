@@ -236,9 +236,11 @@ class DataLoggerConsumer(WebsocketConsumer):
 
 
 class APIConsumer(WebsocketConsumer,ArduinoAPIWebsocketConsumer):
+
     def connect(self):
         self.register_at_apis(self)
         self.accept()
+        self.start_broadcast()
 
     def disconnect(self, close_code):
         self.unregister_at_apis(self)
