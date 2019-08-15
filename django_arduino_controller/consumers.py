@@ -155,6 +155,7 @@ class BoardDataConsumer(WebsocketConsumer):
             pass
 
     def to_client(self, data=None, type=None):
+        print(data)
         self.send(
             text_data=json.dumps({"data": data, "type": type}, cls=JsonMultiEncoder)
         )
@@ -227,6 +228,7 @@ class DataLoggerConsumer(WebsocketConsumer):
             pass
 
     def to_client(self, data=None, type=None):
+        print(data)
         self.send(
             text_data=json.dumps({"data": data, "type": type}, cls=JsonMultiEncoder)
         )
