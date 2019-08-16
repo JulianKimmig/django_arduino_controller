@@ -1,0 +1,26 @@
+{% load sekizai_tags %}
+{% load static%}
+<div id="api_programmer" class="container">
+    <div id="api_programmer_api_selector_container" class="row">
+    </div>
+    <div id="api_programmer_bottom" class="row">
+        <div id="api_programmer_api_function_selecor" class="col col-1">
+            <div id="api_programmer_api_function_selecor_title"></div>
+        </div>
+        <div id="api_programmer_api_code_creator" class="col-11">
+        </div>
+    </div>
+</div>
+
+{% addtoblock "jss" %}
+    <script src="{% static 'django_arduino_controller/json_websocket.js' %}"></script>
+    <script type="application/javascript" src="{% static 'django_arduino_controller/arduino_api_controller.js' %}"></script>
+{% endaddtoblock %}
+
+{% addtoblock "jss" %}
+    <script type="application/javascript" src="{% static 'django_arduino_controller/api_programmer.js' %}"></script>
+{% endaddtoblock %}
+
+{% addtoblock "css" %}
+    <link rel="stylesheet" type="text/css" href="{% static 'django_arduino_controller/arduino_api_programmer.css' %}">
+{% endaddtoblock %}

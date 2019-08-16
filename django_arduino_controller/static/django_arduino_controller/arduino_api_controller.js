@@ -1,9 +1,43 @@
 if (!logger)
     var logger = console;
+if (typeof LinkedVar === "undefined") {
+    LinkedVar = class {
+        constructor(value) {
+            this.value = value;
+            this.linked_functions = [];
+        }
 
+        set(value) {
+            this.value = value;
+            for (let i = 0; i < this.linked_functions.length; i++) {
+                this.linked_functions(this.value);
+            }
+        }
+
+        link_to(func) {
+            console.log(this.value);
+            this.linked_functions.push(func);
+            console.log(func);
+            func(this.value)
+        }
+
+        html(){
+            let span = $('<span class="linkedvar"></span>');
+            this.link_to(function (value) {
+                span.text(value)
+            });
+            return span
+        }
+
+        toString(){
+            return this.value
+        }
+    };
+}
 if (typeof arduino_api_controller === "undefined") {
     arduino_api_controller = {
         api_ws_url: null,
+        hidden: false,
         apis: [],
         api_controll_panel: $('#controller_sidebar_content'),
         api_ws: new JsonWebsocket("Arduino Api Websocket"),
@@ -17,6 +51,7 @@ if (typeof arduino_api_controller === "undefined") {
             arduino_api_controller.apis = []
         },
         api_constructor: function (api) {
+            if(arduino_api_controller.hidden)return $("<div></div>");
             let panel = $('<div id="api_control_panel_' + api.position + '">' +
                 '<div class="api_control_panel_title">' + api.name + '<span name="status_indicator"><span class="tooltiptext"></span></span></div><div name="api_control_panel_boards"></div></div>');
             arduino_api_controller.api_controll_panel.append(panel);
@@ -42,7 +77,7 @@ if (typeof arduino_api_controller === "undefined") {
         ApiFunction : class{
             constructor(api,name,data) {
                 this.api = api;
-                this.name=name;
+                this.name= new LinkedVar(name);
                 this.input = null;
                 this.create_input(data);
             }
@@ -115,7 +150,7 @@ if (typeof arduino_api_controller === "undefined") {
         },
         API: class {
             constructor(name, position) {
-                this.name = name;
+                this.name = new LinkedVar(name);
                 this.position = position;
                 this.ready=false;
                 this.container = arduino_api_controller.api_constructor(this);
@@ -202,7 +237,6 @@ if (typeof arduino_api_controller === "undefined") {
                 arduino_api_controller.apis[i].set_status(data.data[i]);
             }
         },
-
         set_functions: function (data) {
             arduino_api_controller.apis[data.data.api_position].set_functions(data.data)
         },
