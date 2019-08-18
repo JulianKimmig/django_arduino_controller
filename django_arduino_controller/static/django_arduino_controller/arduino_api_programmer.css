@@ -14,7 +14,15 @@
     margin: 4px;
     padding: 5px;
 }
-#api_programmer_api_function_selecor{
+
+.api-function-selector{
+    background-color: #2dbeff;
+    border-radius: 10px 10px 10px 10px;
+    margin: 4px;
+    padding: 5px;
+}
+
+#api_programmer_api_function_selector{
     border-right: 2px solid black;
 }
 

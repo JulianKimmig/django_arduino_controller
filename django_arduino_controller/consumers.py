@@ -237,12 +237,15 @@ class DataLoggerConsumer(WebsocketConsumer):
 
 class APIConsumer(WebsocketConsumer, ArduinoAPIWebsocketConsumer):
     def connect(self):
-        self.register_at_apis(self)
-        self.accept()
-        self.start_broadcast()
+        if (self.register_at_apis(self)):
+            self.accept()
+            self.start_broadcast()
 
     def disconnect(self, close_code):
         self.unregister_at_apis(self)
+
+    def websocket_disconnect(self,message):
+        self.close()
 
     def receive(self, text_data=None, bytes_data=None):
         self.client_to_api(text_data)

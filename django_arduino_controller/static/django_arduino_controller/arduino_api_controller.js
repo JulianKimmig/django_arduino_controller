@@ -1,39 +1,6 @@
 if (!logger)
     var logger = console;
-if (typeof LinkedVar === "undefined") {
-    LinkedVar = class {
-        constructor(value) {
-            this.value = value;
-            this.linked_functions = [];
-        }
 
-        set(value) {
-            this.value = value;
-            for (let i = 0; i < this.linked_functions.length; i++) {
-                this.linked_functions(this.value);
-            }
-        }
-
-        link_to(func) {
-            console.log(this.value);
-            this.linked_functions.push(func);
-            console.log(func);
-            func(this.value)
-        }
-
-        html(){
-            let span = $('<span class="linkedvar"></span>');
-            this.link_to(function (value) {
-                span.text(value)
-            });
-            return span
-        }
-
-        toString(){
-            return this.value
-        }
-    };
-}
 if (typeof arduino_api_controller === "undefined") {
     arduino_api_controller = {
         api_ws_url: null,
@@ -66,25 +33,33 @@ if (typeof arduino_api_controller === "undefined") {
                 let option = $('<option value="'+i+'"></option>');
                 option.text(board.possible_boards[i]);
                 selector.append(option);
-                console.log(option,board.possible_boards[i],board.possible_boards[i] === board.linked_board);
                 if(board.possible_boards[i] === board.linked_board){
                     option.attr('selected',true);
                 }
-            }
+            };
+            selector.change(function(){
+                let send_data={api: board.api.position,
+                    index:board.position,
+                    possible_index:parseInt(selector.val())
+                };
+                arduino_api_controller.api_ws.cmd_message("link_possible_board", send_data);
+                console.log(selector.val())
+            });
             panel.append(selector);
+
             return panel
         },
         ApiFunction : class{
             constructor(api,name,data) {
                 this.api = api;
-                this.name= new LinkedVar(name);
+                this.name= name;
                 this.input = null;
                 this.create_input(data);
             }
 
             create_input(data) {
                 if(!data.visible)return;
-                let box = $("<form class='api_function_box form'></form>");
+                let box = $("<form class='api_function_box form'><div class='h5'>"+this.name+"</div></form>");
                 for (let kwarg in data.kwargs) {
                     let funcdata = data.kwargs[kwarg];
                     let subbox=$("<div class='api_function_parameter form-check-inline'></div>");
@@ -99,8 +74,8 @@ if (typeof arduino_api_controller === "undefined") {
                         default:
                             break;
                     }
-                    subbox.append("<label>" + kwarg + "</label>");
                     subbox.append(input);
+                    subbox.append("<label>" + kwarg + "</label>");
                     box.append(subbox);
                 }
                 let button = $("<button class='functionbutton btn btn-primary' disabled>set</button>");
@@ -150,7 +125,7 @@ if (typeof arduino_api_controller === "undefined") {
         },
         API: class {
             constructor(name, position) {
-                this.name = new LinkedVar(name);
+                this.name = name;
                 this.position = position;
                 this.ready=false;
                 this.container = arduino_api_controller.api_constructor(this);
@@ -214,7 +189,8 @@ if (typeof arduino_api_controller === "undefined") {
             add_function(func) {
                 this.functions[func.name] = func;
                 if(func.input)
-                    this.container.append(func.input)
+                    this.container.append(func.input);
+                return func;
             }
         },
         add_api: function (api) {
