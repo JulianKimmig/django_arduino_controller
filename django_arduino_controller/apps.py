@@ -19,7 +19,10 @@ class DjangoArduinoControllerConfig(AppConfig):
                 start_in_background=True, config=self.config.getsubdict(["portdata"])
             )
         for i in range(len(DjangoArduinoControllerConfig.apis)):
-            api = DjangoArduinoControllerConfig.apis[i](self.serial_reader,config=self.config.get_parent().getsubdict(preamble=["apis",i]))
+            api = DjangoArduinoControllerConfig.apis[i](
+                self.serial_reader,
+                config=self.config.get_parent().getsubdict(preamble=["apis", i]),
+            )
             APIConsumer.register_api(api)
 
     @classmethod
@@ -28,5 +31,10 @@ class DjangoArduinoControllerConfig(AppConfig):
         for instance in cls.instances:
             if instance.serial_reader is not None:
                 i = len(cls.apis) - 1
-                api = cls.apis[i](instance.serial_reader,config=instance.config.get_parent().getsubdict(preamble=["apis",i]))
+                api = cls.apis[i](
+                    instance.serial_reader,
+                    config=instance.config.get_parent().getsubdict(
+                        preamble=["apis", i]
+                    ),
+                )
                 APIConsumer.register_api(api)

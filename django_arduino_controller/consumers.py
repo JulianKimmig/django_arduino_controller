@@ -235,8 +235,7 @@ class DataLoggerConsumer(WebsocketConsumer):
         self.receiver.receive(text_data)
 
 
-class APIConsumer(WebsocketConsumer,ArduinoAPIWebsocketConsumer):
-
+class APIConsumer(WebsocketConsumer, ArduinoAPIWebsocketConsumer):
     def connect(self):
         self.register_at_apis(self)
         self.accept()
