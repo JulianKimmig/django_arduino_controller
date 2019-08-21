@@ -11,8 +11,16 @@ class DjangoArduinoControllerConfig(AppConfig):
     instances = set()
     serial_reader = None
     config = None
+    instance_apis=[]
+
+    def get_api(self,api_class):
+        for api in self.instance_apis:
+            if api.__class__ == api_class:
+                return api
+        return None
 
     def ready(self):
+        self.instance_apis=[]
         DjangoArduinoControllerConfig.instances.add(self)
         if self.serial_reader is None:
             self.serial_reader = acsr.SerialReader(
@@ -24,6 +32,7 @@ class DjangoArduinoControllerConfig(AppConfig):
                 config=self.config.get_parent().getsubdict(preamble=["apis", i]),
             )
             APIConsumer.register_api(api)
+            self.instance_apis.append(api)
 
     @classmethod
     def add_api(cls, api_class):
@@ -37,4 +46,5 @@ class DjangoArduinoControllerConfig(AppConfig):
                         preamble=["apis", i]
                     ),
                 )
+                instance.instance_apis.append(api)
                 APIConsumer.register_api(api)

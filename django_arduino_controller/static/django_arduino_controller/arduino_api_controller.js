@@ -59,7 +59,11 @@ if (typeof arduino_api_controller === "undefined") {
 
             create_input(data) {
                 if(!data.visible)return;
-                let box = $("<form class='api_function_box form'><div class='h5'>"+this.name+"</div></form>");
+                let box = $("<form class='api_function_box form'><div class='function_name h5'>"+this.name+"</div></form>");
+                if(data.datalink !== undefined){
+                    box.find('.function_name').append(' [<span datalink="'+data.datalink+'"></span>]')
+                }
+
                 for (let kwarg in data.kwargs) {
                     let funcdata = data.kwargs[kwarg];
                     let subbox=$("<div class='api_function_parameter form-check-inline'></div>");
@@ -105,10 +109,12 @@ if (typeof arduino_api_controller === "undefined") {
                 this.api = api;
                 this.position = position;
                 this.board_class = board_class;
-                this.linked_board = linked_board;
+                this.linked_board = linked_board.board;
+                this.id = linked_board.id;
                 this.possible_boards = possible_boards;
                 this.container = arduino_api_controller.board_constructor(this);
                 this.api.boardbox.append(this.container);
+                this.data={}
             }
 
             remove() {
@@ -121,6 +127,9 @@ if (typeof arduino_api_controller === "undefined") {
                 if (index > -1) {
                     this.api.boards.splice(index, 1);
                 }
+            }
+            set_data(data){
+                for (var attrname in data) { this.data[attrname] = data[attrname]; }
             }
         },
         API: class {
@@ -175,6 +184,11 @@ if (typeof arduino_api_controller === "undefined") {
                 }
             }
 
+            set_data(data){
+                for(let key in data){
+                    $('[datalink="'+key+'"]').val(data[key]).text(data[key]);
+                }
+            }
             clear_functions(){
 
             }
@@ -191,6 +205,14 @@ if (typeof arduino_api_controller === "undefined") {
                 if(func.input)
                     this.container.append(func.input);
                 return func;
+            }
+
+            get_board_by_id(id) {
+                for (let i = 0; i < this.boards.length; i++) {
+                    if(this.boards[i].id === id)
+                        return this.boards[i];
+                }
+                return null
             }
         },
         add_api: function (api) {
@@ -216,17 +238,33 @@ if (typeof arduino_api_controller === "undefined") {
         set_functions: function (data) {
             arduino_api_controller.apis[data.data.api_position].set_functions(data.data)
         },
+        set_data: function (data) {
+            for (let i = 0; i < Math.min(data.data.length,arduino_api_controller.apis.length); i++) {
+                arduino_api_controller.apis[i].set_data(data.data[i]);
+            }
+        },
+        set_running_data :function (data) {
+        }
     };
 
 
+    arduino_api_controller.api_ws.RECONNECT_TIME=2000;
     arduino_api_controller.api_ws.add_on_connect_function(arduino_api_controller.check_apis);
     arduino_api_controller.api_ws.add_cmd_funcion("set_apis", arduino_api_controller.set_apis);
     arduino_api_controller.api_ws.add_cmd_funcion("set_boards", arduino_api_controller.set_boards);
     arduino_api_controller.api_ws.add_cmd_funcion("set_status", arduino_api_controller.set_status);
     arduino_api_controller.api_ws.add_cmd_funcion("set_functions", arduino_api_controller.set_functions);
+    arduino_api_controller.api_ws.add_cmd_funcion("set_data", arduino_api_controller.set_data);
+    arduino_api_controller.api_ws.add_cmd_funcion("set_running_data", arduino_api_controller.set_running_data);
     $(document).ready(function () {
+        arduino_api_controller.api_controll_panel.click();
         if (arduino_api_controller.api_ws_url !== null) {
             arduino_api_controller.api_ws.connect(arduino_api_controller.api_ws_url);
         }
+    });
+
+    $(window).on("beforeunload", function(e) {
+        arduino_api_controller.api_ws.cmd_message("close");
+        arduino_api_controller.api_ws.close();
     });
 }

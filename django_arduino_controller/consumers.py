@@ -245,6 +245,7 @@ class APIConsumer(WebsocketConsumer, ArduinoAPIWebsocketConsumer):
         self.unregister_at_apis(self)
 
     def websocket_disconnect(self,message):
+        self.disconnect(0)
         self.close()
 
     def receive(self, text_data=None, bytes_data=None):
