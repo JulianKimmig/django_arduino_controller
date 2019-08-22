@@ -6,6 +6,7 @@ if (typeof arduino_api_controller === "undefined") {
         api_ws_url: null,
         hidden: false,
         apis: [],
+        set_status_functions: [],
         api_controll_panel: $('#controller_sidebar_content'),
         api_ws: new JsonWebsocket("Arduino Api Websocket"),
         check_apis: function () {
@@ -234,6 +235,8 @@ if (typeof arduino_api_controller === "undefined") {
             for (let i = 0; i < Math.min(data.data.length,arduino_api_controller.apis.length); i++) {
                 arduino_api_controller.apis[i].set_status(data.data[i]);
             }
+            for(let i=0;i<arduino_api_controller.set_status_functions.length;i++)
+                arduino_api_controller.set_status_functions[i](data);
         },
         set_functions: function (data) {
             arduino_api_controller.apis[data.data.api_position].set_functions(data.data)
