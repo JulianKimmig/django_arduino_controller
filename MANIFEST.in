@@ -1,2 +1,3 @@
 recursive-include django_arduino_controller/templates *
 recursive-include django_arduino_controller/static *
+include *.txt *.md
